@@ -20,6 +20,12 @@ class ImageWithPrompt:
                     },
                 ),
                 "max_tokens": ("INT", {"min": 1, "max": 2048, "default": 77}),
+                "api_key": (
+                    "STRING",
+                    {
+                        "multiline": True
+                    },
+                )
             }
         }
 
@@ -28,17 +34,14 @@ class ImageWithPrompt:
 
     CATEGORY = "OpenAI"
 
-    def __init__(self):
+    def generate_completion(self, Image, prompt, max_tokens, api_key):
         self.open_ai_client: OpenAIClient = OpenAIClient(
-            api_key=credentials.get_open_ai_api_key()
+            api_key=api_key
         )
-
-    def generate_completion(
-        self, Image: torch.Tensor, prompt: str, max_tokens: int
-    ) -> Tuple[str]:
+    
         b64image = image.pil2base64(image.tensor2pil(Image))
         response = self.open_ai_client.chat.completions.create(
-            model="gpt-4-vision-preview",
+            model="gpt-4o",
             max_tokens=max_tokens,
             messages=[
                 {
@@ -54,6 +57,9 @@ class ImageWithPrompt:
             ],
         )
         if len(response.choices) == 0:
-            raise Exception("No response from OpenAI API")
+            print("GPT4o Analysis Failed")
+            return "null"
+            
+        print(response.choices[0].message.content)
 
-        return (response.choices[0].message.content,)
+        return response.choices[0].message.content
